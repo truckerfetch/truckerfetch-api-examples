@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -65,5 +65,21 @@ test('download checks authenticated bytes and never overwrites an existing CSV',
     await assert.rejects(downloadExport(request, id, directory), /EEXIST/);
     assert.deepEqual(await readFile(files[0]), bytes);
     await assert.rejects(downloadExport(async path => path.endsWith('/parts/0') ? Buffer.from('tampered') : request(path), id, directory), /export_integrity_failed/);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('download leaves a preexisting partial file untouched when exclusive creation fails', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'truckerfetch-owned-partial-'));
+  const bytes = Buffer.from('usdot\n123\n');
+  const original = Buffer.from('prior or concurrent download contents');
+  const target = join(directory, id + '-volume-0.csv');
+  const temporary = target + '.partial';
+  const part = { index: 0, volume: 0, length: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') };
+  const request = async path => path.endsWith('/download') ? { data: { parts: [part] } } : path.endsWith('/parts/0') ? bytes : { data: { state: 'ready' } };
+  try {
+    await writeFile(temporary, original, { flag: 'wx' });
+    await assert.rejects(downloadExport(request, id, directory), { code: 'EEXIST' });
+    assert.deepEqual(await readFile(temporary), original);
+    await assert.rejects(readFile(target), { code: 'ENOENT' });
   } finally { await rm(directory, { recursive: true, force: true }); }
 });

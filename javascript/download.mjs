@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdir, writeFile, link, rm } from 'node:fs/promises';
+import { mkdir, open, link, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createClient, ApiError } from './client.mjs';
 export async function downloadExport(request, id, outputDirectory) {
@@ -28,8 +28,12 @@ export async function downloadExport(request, id, outputDirectory) {
         chunks.push(bytes);
       }
       const target = resolve(directory, id + '-volume-' + volume + '.csv');
-      const temporary = target + '.partial'; partials.push(temporary);
-      await writeFile(temporary, Buffer.concat(chunks), { flag: 'wx', mode: 0o600 });
+      const temporary = target + '.partial';
+      const file = await open(temporary, 'wx', 0o600);
+      // Register cleanup only after exclusive creation establishes ownership.
+      partials.push(temporary);
+      try { await file.writeFile(Buffer.concat(chunks)); }
+      finally { await file.close(); }
       files.push({ temporary, target });
     }
     // Keep all volumes partial until every authenticated part has passed its checksum.

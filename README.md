@@ -69,7 +69,9 @@ Historical edition unlocks require `data:read` + `archive:unlock`, an explicit d
 
 [javascript/webhook.mjs](javascript/webhook.mjs) and [python/webhook.py](python/webhook.py) verify the exact raw request bytes with the endpoint's one-time signing secret. They check the event ID, key ID, timestamp tolerance and constant-time HMAC before parsing.
 
-Use a raw-body route in your web framework. Store a unique event ID durably before returning 2xx, validate the supported event schema, then process asynchronously. Duplicate and out-of-order delivery is possible. Reconcile resource references through your authenticated API client; never fetch an arbitrary URL supplied in an event body. Endpoint creation, secret rotation and replay controls remain in the TruckerFetch dashboard.
+Use a raw-body route in your web framework. A new endpoint first receives a signed `endpoint.verify` event containing a `challenge`. Validate its signature, event ID, key ID and timestamp with the same verifier before responding. For this verification event, return a 2xx response whose plain-text body is exactly the signed `event.challenge` string; do not JSON-encode it or return an empty acknowledgement. The destination becomes active only after this handshake succeeds.
+
+For normal supported events, validate the event schema and store a unique event ID durably before returning 2xx, then process asynchronously. Duplicate and out-of-order delivery is possible. Reconcile resource references through your authenticated API client; never fetch an arbitrary URL supplied in an event body. Endpoint creation, secret rotation and replay controls remain in the TruckerFetch dashboard.
 
 Both languages use the same deterministic [synthetic test vector](tests/webhook-vector.json). Its public key is only fixture material.
 
