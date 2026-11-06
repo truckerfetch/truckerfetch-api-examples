@@ -1,0 +1,9 @@
+{
+  "note": "Synthetic deterministic test secret and event; never use as a real signing key.",
+  "secret": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "key_id": "synthetic-key-1",
+  "timestamp": "1793836800",
+  "event_id": "42f1dc4a-11e0-48fb-b41a-a00484d2d170",
+  "raw_body": "{\"id\":\"42f1dc4a-11e0-48fb-b41a-a00484d2d170\",\"type\":\"edition.published\",\"resource\":\"/api/v1/editions/latest\",\"schema_version\":1}",
+  "signature": "v1=3e98a060a820dc35f10c3b842d51101733227176ff84f6a86f1017bf13f1c008"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "@truckerfetch/api-examples",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Dependency-free Node.js and Python examples for the TruckerFetch API",
+  "engines": { "node": ">=24" },
+  "scripts": { "test": "node --test tests/*.test.mjs", "test:python": "python3 -m unittest discover -s tests -p 'test_*.py'" }
+}
